@@ -30,7 +30,14 @@ var VERSION = "1.0";
 var express = require("express");
 var app = express();
 var http = require("http").createServer(app);
-var io = require("socket.io")(http);
+var io = require("socket.io")(http, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
+
 var Filter = require("bad-words");
 
 
@@ -121,7 +128,7 @@ io.on("connection", function (socket) {
     //wait for the player to send their name and info, then broadcast them
     socket.on("join", function (playerInfo) {
 
-        //console.log("Number of sockets " + Object.keys(io.sockets.connected).length);
+        console.log("Number of sockets " + io.sockets.sockets.size);
 
         try {
 
@@ -145,8 +152,8 @@ io.on("connection", function (socket) {
                 roomPlayers = myRoom.length + 1;
                 console.log("There are now " + roomPlayers + " users in " + playerInfo.room);
             }
-
-            var serverPlayers = Object.keys(io.sockets.connected).length + 1;
+          
+            var serverPlayers = io.sockets.sockets.size ;
 
             var isBanned = false;
 
