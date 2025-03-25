@@ -136,9 +136,9 @@ io.on("connection", function (socket) {
             //if running locally it's not gonna work
             var IP = "";
             //oh look at this beautiful socket.io to get an goddamn ip address
-            if (socket.handshake.headers != null)
-                if (socket.handshake.headers["x-forwarded-for"] != null) {
-                    IP = socket.handshake.headers["x-forwarded-for"].split(",")[0];
+            if (socket.client.conn.request.headers != null)
+                if (socket.client.conn.request.headers["x-forwarded-for"] != null) {
+                    IP = socket.client.conn.request.headers["x-forwarded-for"].split(",")[0];
                 }
 
             if (playerInfo.nickName == "")
@@ -147,7 +147,7 @@ io.on("connection", function (socket) {
                 console.log("New user joined the game: " + playerInfo.nickName + " avatar# " + playerInfo.avatar + " colors# " + playerInfo.colors + " " + socket.id);
 
             var roomPlayers = 1;
-            var myRoom = io.sockets.adapter.rooms[playerInfo.room];
+            var myRoom = io.sockets.adapter.rooms.get(playerInfo.room)?.size;
             if (myRoom != undefined) {
                 roomPlayers = myRoom.length + 1;
                 console.log("There are now " + roomPlayers + " users in " + playerInfo.room);
@@ -406,7 +406,7 @@ io.on("connection", function (socket) {
         try {
 
             var roomPlayers = 1;
-            var myRoom = io.sockets.adapter.rooms[obj.to];
+            var myRoom = io.sockets.adapter.rooms.get[obj.to].size;
             if (myRoom != undefined) {
                 roomPlayers = myRoom.length + 1;
             }
