@@ -277,9 +277,9 @@ io.on("connection", function (socket) {
 
     //when a client disconnects I have to delete its player object
     //or I would end up with ghost players
-    socket.on("disconnect", function () {
+    socket.on("disconnect",  (reason)=> {
         try {
-            console.log("Player disconnected " + socket.id);
+            console.log("Player disconnected " + socket.id," with Reason : ",reason);
 
             var playerObject = gameState.players[socket.id];
 
