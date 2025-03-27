@@ -147,7 +147,7 @@ io.on("connection", function (socket) {
                 console.log("New user joined the game: " + playerInfo.nickName + " avatar# " + playerInfo.avatar + " colors# " + playerInfo.colors + " " + socket.id);
 
             var roomPlayers = 1;
-            var myRoom = io.sockets.adapter.rooms.get(playerInfo.room)?.size;
+            var myRoom = io.sockets.adapter.rooms.get(playerInfo.room);
             if (myRoom != undefined) {
                 roomPlayers = myRoom.length + 1;
                 console.log("There are now " + roomPlayers + " users in " + playerInfo.room);
