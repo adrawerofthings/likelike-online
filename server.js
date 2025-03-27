@@ -406,7 +406,7 @@ io.on("connection", function (socket) {
         try {
 
             var roomPlayers = 1;
-            var myRoom = io.sockets.adapter.rooms.get[obj.to].size;
+            var myRoom = io.sockets.adapter.rooms.get[obj.to];
             if (myRoom != undefined) {
                 roomPlayers = myRoom.length + 1;
             }
