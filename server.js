@@ -28,13 +28,14 @@ var VERSION = "1.0";
 
 //create a web application that uses the express frameworks and socket.io to communicate via http (the web protocol)
 var express = require("express");
-var app = express();
-var http = require("http").createServer(app);
-var io = require("socket.io")(http, {
+const http = require("http");
+const { Server } = require("socket.io");
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
   cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
-    credentials: true
+    origin: "*", //allow all origins
+    methods: ["GET", "POST"]
   }
 });
 
@@ -767,8 +768,9 @@ function IPByName(nick) {
 
 
 //listen to the port 3000 this powers the whole socket.io
-http.listen(port, function () {
-    console.log("listening on *:3000");
+const PORT = process.env.PORT || 8080;
+server.listen(PORT, () => {
+  console.log(`Server running on port ${8080}`);
 });
 
 //check the last activity and disconnect players that have been idle for too long
