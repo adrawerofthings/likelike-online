@@ -142,7 +142,7 @@ io.on("connection", function (socket) {
                 if (socket.client.conn.request.headers["x-forwarded-for"] != null) {
                     IP = socket.client.conn.request.headers["x-forwarded-for"].split(",")[0];
                 }
-
+            console.log({playerInfo});
             if (playerInfo.nickName == "")
                 console.log("New user joined the server in lurking mode " + socket.id + " " + IP);
             else
@@ -150,13 +150,14 @@ io.on("connection", function (socket) {
 
             var roomPlayers = 1;
             var myRoom = io.sockets.adapter.rooms.get(playerInfo.room);
+            console.log({myRoom});
             if (myRoom != undefined) {
                 roomPlayers = myRoom.length + 1;
                 console.log("There are now " + roomPlayers + " users in " + playerInfo.room);
             }
           
             var serverPlayers = io.sockets.sockets.size ;
-
+            console.log({serverPlayers,IP});
             var isBanned = false;
 
             //prevent banned IPs from joining
@@ -171,7 +172,8 @@ io.on("connection", function (socket) {
                 }
 
             }
-
+            console.log({players: gameState.players,socketId: socket.id});
+             console.log({ROOMS:DATA.ROOMS,playerInfo});
             //prevent secret rooms to be joined through URL
             if (DATA.ROOMS[playerInfo.room] != null)
                 if (DATA.ROOMS[playerInfo.room].secret == true) {
