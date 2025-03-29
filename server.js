@@ -11,7 +11,7 @@ PORT = 3000
 */
 
 
-var port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 //number of emits per second allowed for each player, after that ban the IP.
 //over 30 emits in this game means that the client is hacked and the flooding is malicious
@@ -36,7 +36,8 @@ const io = new Server(server, {
   cors: {
     origin: "*", //allow all origins
     methods: ["GET", "POST"]
-  }
+    },
+    transports:["websocket","polling"]
 });
 
 var Filter = require("bad-words");
@@ -768,7 +769,6 @@ function IPByName(nick) {
 
 
 //listen to the port 3000 this powers the whole socket.io
-const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
   console.log(`Server running on port ${8080}`);
 });

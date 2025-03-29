@@ -411,7 +411,8 @@ function setup() {
 
     //I create a socket but I wait to assign all the functions before opening a connection
     socket = io({
-        autoConnect: false
+        autoConnect: false,
+        transports: ["websocket"]
     });
 
     //server sends out the response to the name submission, only if lurk mode is disabled
