@@ -213,7 +213,13 @@ io.on("connection", function (socket) {
                         console.log(playerInfo.nickName + " joins as admin");
 
                     //the player objects on the client will keep track of the room
-                    var newPlayer = { id: socket.id, nickName: filter.clean(playerInfo.nickName), colors: playerInfo.colors, room: playerInfo.room, avatar: playerInfo.avatar, x: playerInfo.x, y: playerInfo.y };
+                    if (playerInfo.nickName != "") {
+                        var cleanedNickName = filter.clean(playerInfo.nickName);
+                    } else {
+                        var cleanedNickName = playerInfo.nickName;
+                    }
+
+                    var newPlayer = { id: socket.id, nickName: cleanedNickName, colors: playerInfo.colors, room: playerInfo.room, avatar: playerInfo.avatar, x: playerInfo.x, y: playerInfo.y, destinationX: playerInfo.destinationX, destinationY: playerInfo.destinationY };
 
                     //save the same information in my game state
                     gameState.players[socket.id] = newPlayer;
@@ -234,7 +240,7 @@ io.on("connection", function (socket) {
 
                     newPlayer.new = true;
 
-                    //let"s not count lurkers
+                    //let's not count lurkers
                     if (playerInfo.nickName != "")
                         visits++;
 
