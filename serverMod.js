@@ -359,8 +359,8 @@ module.exports.rhymeRoomTalkFilter = function (player, message) {
 //if enters when music is playing sent 
 module.exports.rhymeRoomJoin = function (playerObject, roomId) {
 
-    if (io.sockets.sockets[playerObject.id] != null && global.beatPlaying) {
-        io.sockets.sockets[playerObject.id].emit('musicEnter', global.beat);
+    if (io.sockets.sockets.get(playerObject.id) != null && global.beatPlaying) {
+        io.sockets.sockets.get(playerObject.id).emit('musicEnter', global.beat);
 
     }
 
@@ -369,8 +369,8 @@ module.exports.rhymeRoomJoin = function (playerObject, roomId) {
 //if enters when music is playing sent 
 module.exports.rhymeRoomLeave = function (playerObject, roomId) {
 
-    if (io.sockets.sockets[playerObject.id] != null) {
-        io.sockets.sockets[playerObject.id].emit('musicExit');
+    if (io.sockets.sockets.get(playerObject.id) != null) {
+        io.sockets.sockets.get(playerObject.id).emit('musicExit');
 
     }
 }
@@ -468,7 +468,7 @@ module.exports.VIPRoomJoin = function (playerObject, roomId) {
         var expelled = global.VIPList.shift();
 
         //force leave
-        if (io.sockets.sockets[expelled] != null) {
+        if (io.sockets.sockets.get(expelled) != null) {
 
             this.transferPlayer(expelled, "VIPRoom", "likelikeOutside", 121 * 2, 89 * 2);
             io.to(expelled).emit('godMessage', "Sorry, we had to expel you to make room for " + playerObject.nickName);
@@ -494,7 +494,7 @@ module.exports.VIPRoomIntro = function (newComerId, introObj) {
 module.exports.transferPlayer = function (playerId, from, to, x, y) {
     //console.log(playerId + " is transfered to " + to);
 
-    var s = io.sockets.sockets[playerId];
+    var s = io.sockets.sockets.get(playerId);
     var p = gameState.players[playerId];
 
     if (s != null)

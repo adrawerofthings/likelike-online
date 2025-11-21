@@ -406,7 +406,7 @@ io.on("connection", function (socket) {
         try {
 
             var roomPlayers = 1;
-            var myRoom = io.sockets.adapter.rooms.get[obj.to];
+            var myRoom = io.sockets.adapter.rooms.get(obj.to);
             if (myRoom != undefined) {
                 roomPlayers = myRoom.length + 1;
             }
@@ -734,11 +734,12 @@ function socketByName(nick) {
     for (var id in gameState.players) {
         if (gameState.players.hasOwnProperty(id)) {
             if (gameState.players[id].nickName.toUpperCase() == nick.toUpperCase()) {
-                s = io.sockets.sockets[id];
+                s = io.sockets.sockets.get(id);
             }
         }
     }
     return s;
+
 }
 
 function idByName(nick) {
@@ -830,7 +831,7 @@ global.NPC = function (o) {
         //If I"m not the new player send an introduction to the new player 
         //slight issue, server doesn't compute movements so if moving it appears at the destination
         //a way to solve this would be to save the time of the movement and lerp it
-        io.sockets.sockets[pId].emit("onIntro", {
+        io.sockets.sockets.get(pId).emit("onIntro", {
             id: this.id,
             nickName: this.nickName,
             colors: this.colors,
