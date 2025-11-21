@@ -10,8 +10,7 @@ ADMINS=username1|pass1,username2|pass2
 PORT = 3000
 */
 
-
-const PORT = process.env.PORT || 8080;
+var port = process.env.PORT || 3000;
 
 //number of emits per second allowed for each player, after that ban the IP.
 //over 30 emits in this game means that the client is hacked and the flooding is malicious
@@ -28,20 +27,14 @@ var VERSION = "1.0";
 
 //create a web application that uses the express frameworks and socket.io to communicate via http (the web protocol)
 var express = require("express");
-const http = require("http");
-const { Server } = require("socket.io");
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "*", //allow all origins
-    methods: ["GET", "POST"]
-    },
+var app = express();
+var http = require("http").createServer(app);
+var io = require("socket.io")(http, {
+    parser: require("socket.io-msgpack-parser"),
     transports:["websocket","polling"]
 });
 
 var Filter = require("bad-words");
-
 
 //time before disconnecting (forgot the tab open?)
 var ACTIVITY_TIMEOUT = 10 * 60 * 1000;
@@ -130,7 +123,7 @@ io.on("connection", function (socket) {
     //wait for the player to send their name and info, then broadcast them
     socket.on("join", function (playerInfo) {
 
-        console.log("Number of sockets " + io.sockets.sockets.size);
+        //console.log("Number of sockets " + io.sockets.sockets.size);
 
         try {
 
@@ -142,7 +135,7 @@ io.on("connection", function (socket) {
                 if (socket.client.conn.request.headers["x-forwarded-for"] != null) {
                     IP = socket.client.conn.request.headers["x-forwarded-for"].split(",")[0];
                 }
-            console.log({playerInfo});
+
             if (playerInfo.nickName == "")
                 console.log("New user joined the server in lurking mode " + socket.id + " " + IP);
             else
@@ -150,14 +143,13 @@ io.on("connection", function (socket) {
 
             var roomPlayers = 1;
             var myRoom = io.sockets.adapter.rooms.get(playerInfo.room);
-            console.log({myRoom});
             if (myRoom != undefined) {
                 roomPlayers = myRoom.length + 1;
                 console.log("There are now " + roomPlayers + " users in " + playerInfo.room);
             }
-          
+
             var serverPlayers = io.sockets.sockets.size ;
-            console.log({serverPlayers,IP});
+
             var isBanned = false;
 
             //prevent banned IPs from joining
@@ -172,8 +164,7 @@ io.on("connection", function (socket) {
                 }
 
             }
-            console.log({players: gameState.players,socketId: socket.id});
-             console.log({ROOMS:DATA.ROOMS,playerInfo});
+
             //prevent secret rooms to be joined through URL
             if (DATA.ROOMS[playerInfo.room] != null)
                 if (DATA.ROOMS[playerInfo.room].secret == true) {
@@ -238,9 +229,8 @@ io.on("connection", function (socket) {
                     gameState.players[socket.id].room = playerInfo.room;
 
                     //send the user to the default room
-                    socket.join(playerInfo.room, function () {
-                        //console.log(socket.rooms);
-                    });
+                    socket.join(playerInfo.room);
+                    //console.log(socket.rooms);
 
                     newPlayer.new = true;
 
@@ -280,9 +270,9 @@ io.on("connection", function (socket) {
 
     //when a client disconnects I have to delete its player object
     //or I would end up with ghost players
-    socket.on("disconnect",  (reason)=> {
+    socket.on("disconnect", (reason)=> {
         try {
-            console.log("Player disconnected " + socket.id," with Reason : ",reason);
+            console.log("Player disconnected " + socket.id," for reason: ",reason);
 
             var playerObject = gameState.players[socket.id];
 
@@ -771,9 +761,10 @@ function IPByName(nick) {
 
 
 //listen to the port 3000 this powers the whole socket.io
-server.listen(PORT, () => {
-  console.log(`Server running on port ${8080}`);
+http.listen(port, function () {
+    console.log("listening on *:3000");
 });
+
 
 //check the last activity and disconnect players that have been idle for too long
 setInterval(function () {
