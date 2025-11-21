@@ -10,7 +10,6 @@ ADMINS=username1|pass1,username2|pass2
 PORT = 3000
 */
 
-
 var port = process.env.PORT || 3000;
 
 //number of emits per second allowed for each player, after that ban the IP.
@@ -30,9 +29,12 @@ var VERSION = "1.0";
 var express = require("express");
 var app = express();
 var http = require("http").createServer(app);
-var io = require("socket.io")(http);
-var Filter = require("bad-words");
+var io = require("socket.io")(http, {
+    parser: require("socket.io-msgpack-parser"),
+    transports:["websocket","polling"]
+});
 
+var Filter = require("bad-words");
 
 //time before disconnecting (forgot the tab open?)
 var ACTIVITY_TIMEOUT = 10 * 60 * 1000;
@@ -121,7 +123,7 @@ io.on("connection", function (socket) {
     //wait for the player to send their name and info, then broadcast them
     socket.on("join", function (playerInfo) {
 
-        //console.log("Number of sockets " + Object.keys(io.sockets.connected).length);
+        //console.log("Number of sockets " + io.sockets.sockets.size);
 
         try {
 
@@ -129,9 +131,9 @@ io.on("connection", function (socket) {
             //if running locally it's not gonna work
             var IP = "";
             //oh look at this beautiful socket.io to get an goddamn ip address
-            if (socket.handshake.headers != null)
-                if (socket.handshake.headers["x-forwarded-for"] != null) {
-                    IP = socket.handshake.headers["x-forwarded-for"].split(",")[0];
+            if (socket.client.conn.request.headers != null)
+                if (socket.client.conn.request.headers["x-forwarded-for"] != null) {
+                    IP = socket.client.conn.request.headers["x-forwarded-for"].split(",")[0];
                 }
 
             if (playerInfo.nickName == "")
@@ -140,13 +142,13 @@ io.on("connection", function (socket) {
                 console.log("New user joined the game: " + playerInfo.nickName + " avatar# " + playerInfo.avatar + " colors# " + playerInfo.colors + " " + socket.id);
 
             var roomPlayers = 1;
-            var myRoom = io.sockets.adapter.rooms[playerInfo.room];
+            var myRoom = io.sockets.adapter.rooms.get(playerInfo.room);
             if (myRoom != undefined) {
                 roomPlayers = myRoom.length + 1;
                 console.log("There are now " + roomPlayers + " users in " + playerInfo.room);
             }
 
-            var serverPlayers = Object.keys(io.sockets.connected).length + 1;
+            var serverPlayers = io.sockets.sockets.size ;
 
             var isBanned = false;
 
@@ -227,9 +229,8 @@ io.on("connection", function (socket) {
                     gameState.players[socket.id].room = playerInfo.room;
 
                     //send the user to the default room
-                    socket.join(playerInfo.room, function () {
-                        //console.log(socket.rooms);
-                    });
+                    socket.join(playerInfo.room);
+                    //console.log(socket.rooms);
 
                     newPlayer.new = true;
 
@@ -269,9 +270,9 @@ io.on("connection", function (socket) {
 
     //when a client disconnects I have to delete its player object
     //or I would end up with ghost players
-    socket.on("disconnect", function () {
+    socket.on("disconnect", (reason)=> {
         try {
-            console.log("Player disconnected " + socket.id);
+            console.log("Player disconnected " + socket.id," for reason: ",reason);
 
             var playerObject = gameState.players[socket.id];
 
@@ -399,7 +400,7 @@ io.on("connection", function (socket) {
         try {
 
             var roomPlayers = 1;
-            var myRoom = io.sockets.adapter.rooms[obj.to];
+            var myRoom = io.sockets.adapter.rooms.get[obj.to];
             if (myRoom != undefined) {
                 roomPlayers = myRoom.length + 1;
             }
@@ -763,6 +764,7 @@ function IPByName(nick) {
 http.listen(port, function () {
     console.log("listening on *:3000");
 });
+
 
 //check the last activity and disconnect players that have been idle for too long
 setInterval(function () {

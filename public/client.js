@@ -411,7 +411,8 @@ function setup() {
 
     //I create a socket but I wait to assign all the functions before opening a connection
     socket = io({
-        autoConnect: false
+        autoConnect: false,
+        transports: ["websocket"]
     });
 
     //server sends out the response to the name submission, only if lurk mode is disabled
@@ -1200,6 +1201,9 @@ function update() {
 
                 var prevX, prevY;
 
+                // (edit: scaling speed with avatar size so that zoomed out avatars aren't suddenly super fast)
+                var scaledSpeed = SPEED / 2 * (ROOMS[p.room].avatarScale);
+
                 //make sure the coordinates are non null since I may have created a player
                 //but I may still be waiting for the first update
                 if (p.x != null && p.y != null) {
@@ -1228,7 +1232,7 @@ function update() {
                         delta.normalize();
 
                         // then you can multiply that vector by the desired speed
-                        var increment = delta.mult(SPEED * deltaTime / 1000);
+                        var increment = delta.mult(scaledSpeed * deltaTime / 1000);
 
                         /*
                         IMPORTANT
@@ -1275,7 +1279,7 @@ function update() {
                                 //if not obstacle move only horizontally at full speed
                                 if (!obsX && !obsX2 && !obsX3 && abs(delta.x) > 0.1) {
 
-                                    p.x += SPEED * deltaTime / 1000 * (p.x > position.x) ? -1 : 1;
+                                    p.x += scaledSpeed * deltaTime / 1000 * (p.x > position.x) ? -1 : 1;
                                     p.playWalkingAnimation();
 
                                 }
@@ -1287,7 +1291,7 @@ function update() {
 
                                     if (!obsY && !obsY2 && !obsY3 && abs(delta.y) > 0.1) {
 
-                                        p.y += SPEED * deltaTime / 1000 * (p.y > position.y) ? -1 : 1;
+                                        p.y += scaledSpeed * deltaTime / 1000 * (p.y > position.y) ? -1 : 1;
                                         p.playWalkingAnimation();
 
                                     }
@@ -1673,6 +1677,7 @@ function Player(p) {
     this.avatarGraphics = paletteSwap(walkSheets[p.avatar], p.colors, this.tint);
     this.spriteSheet = loadSpriteSheet(this.avatarGraphics, AVATAR_W, AVATAR_H, round(walkSheets[p.avatar].width / AVATAR_W));
     this.walkAnimation = loadAnimation(this.spriteSheet);
+    this.walkAnimation.frameDelay = 10;
     //emote
     this.emoteGraphics = paletteSwap(emoteSheets[p.avatar], p.colors, this.tint);
     this.emoteSheet = loadSpriteSheet(this.emoteGraphics, AVATAR_W, AVATAR_H, round(emoteSheets[p.avatar].width / AVATAR_W));
@@ -1708,10 +1713,14 @@ function Player(p) {
     var c1 = color(TOP_COLORS[p.colors[2]]);
     var c2 = color(BOTTOM_COLORS[p.colors[3]]);
 
-    if (brightness(c1) > 30)
+    //upping accessibility standard for visible text
+    //also changed from brightness to lightness function
+    if (lightness(c1) > 50)
         this.sprite.labelColor = TOP_COLORS[p.colors[2]];
-    else if (brightness(c2) > 30)
+    else if (lightness(c2) > 50)
         this.sprite.labelColor = BOTTOM_COLORS[p.colors[3]];
+    else if (lightness(c3) > 50)
+        this.sprite.labelColor = HAIR_COLORS[p.colors[0]];
     else
         this.sprite.labelColor = LABEL_NEUTRAL_COLOR;
 
@@ -2347,26 +2356,30 @@ function paletteSwap(ss, paletteNumbers, t) {
     palette[2] = TOP_COLORS_RGB[paletteNumbers[2]];
     palette[3] = BOTTOM_COLORS_RGB[paletteNumbers[3]];
 
+    // fuzzy colormatching because firefox renders colors imprecisely
+    function colorMatch(r1, g1, b1, r2, g2, b2, tolerance = 3) {
+        return Math.abs(r1 - r2) <= tolerance && 
+               Math.abs(g1 - g2) <= tolerance && 
+               Math.abs(b1 - b2) <= tolerance;
+    }
 
     for (var i = 0; i < img.pixels.length; i += 4) {
-
-        if (img.pixels[i + 3] == 255) {
-            var found = false;
-
-            //non transparent pix replace with palette
-            for (var j = 0; j < REF_COLORS_RGB.length && !found; j++) {
-                //print("Ref color " + j + " " + palette[j]);
-
-                if (img.pixels[i] == REF_COLORS_RGB[j][0] && img.pixels[i + 1] == REF_COLORS_RGB[j][1] && img.pixels[i + 2] == REF_COLORS_RGB[j][2]) {
-                    found = true;
-                    img.pixels[i] = palette[j][0] * tint[0] / 255;
-                    img.pixels[i + 1] = palette[j][1] * tint[1] / 255;
-                    img.pixels[i + 2] = palette[j][2] * tint[2] / 255;
+            if (img.pixels[i + 3] == 255) {
+                var found = false;
+                //non transparent pix replace with palette
+                for (var j = 0; j < REF_COLORS_RGB.length && !found; j++) {
+                    //print("Ref color " + j + " " + palette[j]);
+                    // if (img.pixels[i] == REF_COLORS_RGB[j][0] && img.pixels[i + 1] == REF_COLORS_RGB[j][1] && img.pixels[i + 2] == REF_COLORS_RGB[j][2]) {
+                    if (colorMatch(img.pixels[i], img.pixels[i + 1], img.pixels[i + 2],
+                                  REF_COLORS_RGB[j][0], REF_COLORS_RGB[j][1], REF_COLORS_RGB[j][2])) {
+                        found = true;
+                        img.pixels[i] = palette[j][0] * tint[0] / 255;
+                        img.pixels[i + 1] = palette[j][1] * tint[1] / 255;
+                        img.pixels[i + 2] = palette[j][2] * tint[2] / 255;
+                    }
                 }
-
             }
         }
-    }
     img.updatePixels();
 
     return img;
